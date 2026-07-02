@@ -1,0 +1,15 @@
+sequenceDiagram
+    participant Pub as 📤 Publisher
+    participant Brk as 🏠 Broker
+    participant Log as 💾 MessageLog
+    participant Sub1 as 📥 Subscriber A
+    participant Sub2 as 📥 Subscriber B
+
+    Pub->>Brk: PUBLISH {"tpc":"clima", "pld":{"temp":25}}
+    Brk->>Log: save_message("clima", {...})
+    Log-->>Brk: msg_id = "a1b2c3d4"
+    Brk->>Brk: subscriptions["clima"] = {Sub1, Sub2}
+    Brk->>Sub1: MESSAGE {"pld":{"temp":25},"mid":"a1b2c3d4"}
+    Brk->>Sub2: MESSAGE {"pld":{"temp":25},"mid":"a1b2c3d4"}
+    Brk-->>Pub: OK {"msg_id":"a1b2c3d4","delivered_to":2}
+    Note over Pub,Brk: Publisher nunca supo<br/>quiénes eran Sub1 y Sub2

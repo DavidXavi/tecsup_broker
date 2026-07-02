@@ -1,0 +1,29 @@
+graph TD
+    subgraph BrokerServer["BrokerServer (server.py)"]
+        direction TB
+        A["socket.listen()<br/>127.0.0.1:5555"] --> B["selectors.DefaultSelector()"]
+        B --> C{Evento?}
+        C -->|nueva conexión| D["_accept()<br/>asignar client_id<br/>enviar OK"]
+        C -->|datos listos| E["_handle_client()<br/>recv + buffer"]
+        D --> C
+        E --> F["Frame.decode()"]
+        F --> G{cmd = ?}
+        G -->|PUBLISH| H["save_message()<br/>→ MessageLog<br/>→ reenviar a subs"]
+        G -->|SUBSCRIBE| I["subscriptions[tpc].add(cid)"]
+        G -->|UNSUBSCRIBE| J["subscriptions[tpc].discard(cid)"]
+        G -->|DISCONNECT| K["limpiar cliente<br/>cerrar socket"]
+        G -->|HEARTBEAT| L["responder pong"]
+        H --> C
+        I --> C
+        J --> C
+        K --> C
+        L --> C
+    end
+
+    subgraph Storage["MessageLog (storage.py)"]
+        M["topics.json<br/>lista de tópicos"]
+        N["messages.jsonl<br/>append-only log"]
+    end
+
+    H -.-> M
+    H -.-> N

@@ -1,4 +1,4 @@
-# Broker de Mensajeria — Diapositivas para exponer
+# Broker de Mensajeria — Diapositivas
 
 > Curso: Arquitectura de Software | Tema: Arquitectura Cliente-Servidor + Pub/Sub
 
@@ -23,12 +23,12 @@ Sin broker (punto a punto):
   Servicio A ──> Servicio B
   Servicio A ──> Servicio C
   Servicio A ──> Servicio D   ← Cada servicio conoce a todos los demas
-  Servicio B ──> Servicio E     ?CAOS!
+  Servicio B ──> Servicio E     ¡CAOS!
 
 Con broker (pub/sub):
   Servicio A ──> [BROKER] ──> Servicio B
                              ──> Servicio C   ← A solo conoce al broker
-                             ──> Servicio D     ?ORDEN!
+                             ──> Servicio D     ¡ORDEN!
 ```
 
 **Beneficio clave: DESACOPLAMIENTO.** El que envia no sabe quien recibe. El que recibe no sabe quien envia.
@@ -55,7 +55,7 @@ Con broker (pub/sub):
 
 ---
 
-## Slide 4 — ?Como hablan entre si? El protocolo
+## Slide 4 — ¿Cómo hablan entre sí? El protocolo
 
 ```
 Cada mensaje en el cable tiene este formato:
@@ -126,7 +126,7 @@ Total: ~400 lineas de codigo. Simple, didactico, funcional.
 
 ---
 
-## Slide 7 — ?Por que selectors y no un hilo por conexion?
+## Slide 7 — ¿Por qué selectors y no un hilo por conexion?
 
 | Enfoque | 10 conexiones | 1,000 conexiones | 10,000 conexiones |
 |---------|:---:|:---:|:---:|
@@ -181,7 +181,7 @@ Terminal 3: python -m examples.publisher
 
 ---
 
-## Slide 10 — ?Que aprendimos?
+## Slide 10 — ¿Qué aprendimos?
 
 1. **Un broker no es magia.** Es un bucle que recibe, busca en un diccionario, y reenvia.
 
@@ -195,7 +195,7 @@ Terminal 3: python -m examples.publisher
 
 ---
 
-## Slide 11 — ?Y si esto fuera produccion?
+## Slide 11 — ¿Y si esto fuera producción?
 
 | Hoy (curso) | Manana (produccion) |
 |-------------|-------------------|
@@ -212,7 +212,7 @@ Terminal 3: python -m examples.publisher
 
 ## Slide 12 — Preguntas
 
-**?Preguntas?**
+**¿Preguntas?**
 
 - Codigo: todo en `arquitectura_t4/`
 - Demo: `python -m examples.demo`

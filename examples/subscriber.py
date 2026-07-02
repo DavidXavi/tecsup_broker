@@ -4,8 +4,12 @@ import sys
 from broker import BrokerClient
 
 
+recibidos = 0
+
 def mostrar_mensaje(topic: str, payload, message_id: str, timestamp: str):
-    print(f"\n>> [{topic}] {payload}")
+    global recibidos
+    recibidos += 1
+    print(f"\n>> [{topic}] Recibido #{recibidos}: {payload}")
     print(f"   ID: {message_id}  |  Hora: {timestamp}")
 
 

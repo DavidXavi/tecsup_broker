@@ -10,7 +10,7 @@ Imagina un **cartero inteligente** que recibe paquetes de unos y los entrega sol
 
 ---
 
-## ?Por que no usar RabbitMQ o Kafka?
+## ¿Por qué no usar RabbitMQ o Kafka?
 
 Porque la meta del curso es **entender como funciona por dentro**, no solo usarlo. Al construirlo tu mismo ves:
 
@@ -113,7 +113,7 @@ python -m broker.server
 python -m examples.subscriber
 ```
 
-**Terminal 3 — Publicador:**
+**Terminal 3 — Publicador noticias:**
 
 ```bash
 python -m examples.publisher
@@ -129,7 +129,7 @@ python -m examples.subscriber 127.0.0.1 7777 clima      # escucha "clima"
 
 ---
 
-## ?Que patrones de arquitectura se usan?
+## ¿Qué patrones de arquitectura se usan?
 
 | Patron | Donde | Por que |
 |--------|-------|---------|
@@ -138,6 +138,46 @@ python -m examples.subscriber 127.0.0.1 7777 clima      # escucha "clima"
 | **Topico** | Ruteo por `topic` | Cada topico es un canal independiente |
 | **Event Loop** | `selectors` en el servidor | Maneja muchas conexiones sin un hilo por conexion |
 | **Protocolo de longitud prefijada** | `Frame.encode/decode` | Sabe exactamente donde termina cada mensaje |
+
+---
+
+## Broker vs SOA — ¿en qué se diferencian?
+
+Son parecidos porque ambos desacoplan, pero resuelven problemas distintos:
+
+| Dimension | Broker (Pub/Sub) | SOA (Service-Oriented Architecture) |
+|-----------|-----------------|-------------------------------------|
+| **¿Qué orquesta?** | Mensajes — datos que fluyen | Servicios — lógica de negocio |
+| **Rol central** | Cartero mudo: entrega y se olvida | Orquestador inteligente: sabe de negocios |
+| **Comunicación** | Uno publica, muchos reciben (1:N, asíncrono) | Request-response entre pares (1:1, síncrono) |
+| **Acoplamiento** | El emisor no sabe quién recibe | El consumidor conoce el contrato (WSDL, REST) |
+| **Estado/procesamiento** | El broker no transforma mensajes | El ESB puede transformar, enrutar, enriquecer |
+| **Gobernanza** | Tópicos libres, sin schema formal | Catálogo de servicios, schemas tipados (XSD, WSDL) |
+| **Entrega** | At-most-once → At-least-once → Exactly-once | Request-response inmediato con status code |
+| **Desacople temporal** | El suscriptor puede estar offline y recibir después | Ambos deben estar online al mismo tiempo |
+
+### Analogía
+
+- **SOA** es como una **cadena de montaje** en una fábrica: cada estación sabe exactamente qué recibe, qué produce, y un supervisor controla el flujo completo de extremo a extremo.
+- Un **broker** es el **sistema de correo interno** de esa misma fábrica: transporta papeles entre estaciones sin leerlos ni modificarlos. La fábrica (SOA) puede usar correo interno (broker), pero también otros mecanismos.
+
+### ¿Compiten o se complementan?
+
+**Se complementan.** SOA define contratos, esquemas y gobierna cómo los servicios colaboran. Un broker es la herramienta que SOA usa para la mensajería asíncrona. De hecho, en la práctica moderna (microservicios + event-driven), los servicios se comunican por REST/gRPC cuando necesitan respuesta inmediata, y por un broker cuando necesitan desacople y escalabilidad. El broker no reemplaza a SOA: es infraestructura dentro de SOA.
+
+---
+
+## Diagramas
+
+Generados con Mermaid. Fuente editable en `diagrams/`:
+
+| Diagrama | Archivo | Descripción |
+|----------|---------|-------------|
+| Arquitectura general | `diagrams/arquitectura.{mmd,png,svg}` | Publishers, Broker y Subscribers |
+| Flujo de un mensaje | `diagrams/flujo-mensaje.{mmd,png,svg}` | Secuencia Pub → Broker → Subs |
+| Servidor por dentro | `diagrams/servidor-interno.{mmd,png,svg}` | Event loop, router y storage |
+
+Para regenerar: `mmdc -i diagrams/<archivo>.mmd -o diagrams/<archivo>.png -b transparent`
 
 ---
 
@@ -156,6 +196,10 @@ arquitectura_t4/
 │   ├── demo.py          # Demo completa en una ventana
 │   ├── publisher.py     # Publicador de ejemplo
 │   └── subscriber.py    # Suscriptor de ejemplo
+├── diagrams/
+│   ├── arquitectura.{mmd,png,svg}   # Diagrama de arquitectura general
+│   ├── flujo-mensaje.{mmd,png,svg}  # Diagrama de secuencia de un mensaje
+│   └── servidor-interno.{mmd,png,svg} # Diagrama interno del servidor
 ├── README.md            # Este documento
 ├── presentacion.md      # Diapositivas para exponer
 └── guia.html            # Guia interactiva en el navegador
@@ -165,23 +209,23 @@ arquitectura_t4/
 
 ## Decisiones de diseno (el "por que" detras de cada eleccion)
 
-### ?Por que TCP y no HTTP?
+### ¿Por qué TCP y no HTTP?
 
 HTTP es request-response: el cliente pregunta y el servidor responde. En un broker necesitamos que el servidor le **empuje** mensajes al suscriptor sin que este los pida. TCP nos da un canal bidireccional persistente.
 
-### ?Por que `selectors` y no threads?
+### ¿Por qué `selectors` y no threads?
 
 Un hilo por conexion es simple pero no escala. Con 10,000 suscriptores tendrias 10,000 hilos compitiendo. `selectors` usa **I/O no bloqueante**: un solo hilo atiende todas las conexiones, despertandose solo cuando hay datos listos. Es lo mismo que hacen Nginx, Node.js y Redis en sus nucleos.
 
-### ?Por que JSON y no un protocolo binario?
+### ¿Por qué JSON y no un protocolo binario?
 
 Para un curso, la legibilidad manda. Abrir Wireshark o un `print` y ver `{"cmd":"PUBLISH",...}` es inmediato. En produccion usarias protobuf o MessagePack — pero aqui la meta es entender, no optimizar.
 
-### ?Por que prefijo de longitud y no delimitadores?
+### ¿Por qué prefijo de longitud y no delimitadores?
 
 Si usas `\n` como delimitador, el payload no puede contener saltos de linea. Con un prefijo de 8 digitos (`00000123{...}`), sabes exactamente cuantos bytes leer sin importar el contenido.
 
-### ?Por que persistencia en JSON plano?
+### ¿Por qué persistencia en JSON plano?
 
 Para que puedas abrir `broker_data/messages.jsonl` con cualquier editor y ver el historial. En un sistema real usarias una write-ahead log o SQLite, pero para el curso esto es suficiente y didactico.
 

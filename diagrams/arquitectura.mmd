@@ -1,0 +1,25 @@
+graph LR
+    subgraph Publishers["PUBLISHERS"]
+        P1["📰 Noticias<br/>Publisher"]
+        P2["🌤 Clima<br/>Publisher"]
+    end
+
+    subgraph Broker["BROKER 127.0.0.1:5555"]
+        direction TB
+        S["🧵 Selector<br/>Event Loop"]
+        R["🔀 Router<br/>Pub → Sub"]
+        L["💾 MessageLog<br/>disco .jsonl"]
+        S --> R --> L
+    end
+
+    subgraph Subscribers["SUBSCRIBERS"]
+        SUB1["📬 Noticias<br/>Subscriber"]
+        SUB2["📬 Clima<br/>Subscriber"]
+        SUB3["📬 Todo (*)<br/>Subscriber"]
+    end
+
+    P1 -->|PUBLISH noticias| Broker
+    P2 -->|PUBLISH clima| Broker
+    Broker -->|MESSAGE noticias| SUB1
+    Broker -->|MESSAGE clima| SUB2
+    Broker -->|MESSAGE *| SUB3

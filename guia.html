@@ -139,7 +139,7 @@
 </p>
 
 <div class="toc card">
-  <strong>?Que queres entender?</strong><br>
+  <strong>¿Qué querés entender?</strong><br>
   <a href="#panorama">1. Panorama general</a><br>
   <a href="#protocolo">2. El protocolo — como hablan entre si</a><br>
   <a href="#servidor">3. El servidor — el corazon del broker</a><br>
@@ -171,7 +171,7 @@
 <div class="card">
   <strong>Tres protagonistas:</strong>
   <table>
-    <tr><th>Rol</th><th>?Que hace?</th><th>Analogia</th></tr>
+    <tr><th>Rol</th><th>¿Qué hace?</th><th>Analogía</th></tr>
     <tr>
       <td><span class="tag tag-pub">Publisher</span></td>
       <td>Envia mensajes a un topico</td>
@@ -218,7 +218,7 @@
 <div class="card">
   <h3>2.2 Comandos disponibles</h3>
   <table>
-    <tr><th>Comando</th><th>?Quien lo envia?</th><th>Significado</th></tr>
+    <tr><th>Comando</th><th>¿Quién lo envía?</th><th>Significado</th></tr>
     <tr><td><code>CONNECT</code></td><td>Cliente</td><td>"Hola broker, quiero conectarme"</td></tr>
     <tr><td><code>PUBLISH</code></td><td>Publisher</td><td>"Entrega esto en el topico X"</td></tr>
     <tr><td><code>SUBSCRIBE</code></td><td>Subscriber</td><td>"Quiero recibir todo lo del topico X"</td></tr>
@@ -298,7 +298,7 @@
 </p>
 
 <div class="card">
-  <h3>?Por que una sola clase?</h3>
+  <h3>¿Por qué una sola clase?</h3>
   <p>
     Porque en la vida real, un servicio muchas veces publica Y consume. Un microservicio de pedidos
     publica "pedido_creado" y se suscribe a "pago_confirmado". Una sola conexion TCP al broker
@@ -307,7 +307,7 @@
 </div>
 
 <div class="card">
-  <h3>?Como se usa?</h3>
+  <h3>¿Cómo se usa?</h3>
   <pre><span class="kw">from</span> broker <span class="kw">import</span> BrokerClient
 
 <span class="cmt"># Cualquier cliente puede publicar, suscribirse, o ambos</span>
@@ -537,7 +537,7 @@ client.subscribe(<span class="str">"noticias"</span>)
 
 <table>
   <tr>
-    <th>Patron</th><th>?Donde se ve?</th><th>?Por que lo usamos?</th>
+    <th>Patrón</th><th>¿Dónde se ve?</th><th>¿Por qué lo usamos?</th>
   </tr>
   <tr>
     <td><span class="tag tag-pat">Cliente-Servidor</span></td>
@@ -580,7 +580,7 @@ client.subscribe(<span class="str">"noticias"</span>)
 </p>
 
 <table>
-  <tr><th>Hoy (curso)</th><th>Manana (produccion)</th><th>?Por que?</th></tr>
+  <tr><th>Hoy (curso)</th><th>Mañana (producción)</th><th>¿Por qué?</th></tr>
   <tr>
     <td>1 solo broker</td>
     <td>Cluster con Raft/Paxos</td>

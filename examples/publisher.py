@@ -25,6 +25,7 @@ def main():
                 "contenido": f"Mensaje #{count} desde publicador de ejemplo",
                 "fecha": time.strftime("%H:%M:%S"),
             }
+            print(f"\n--- Mensaje #{count} ---")
             client.publish(topic, mensaje)
             time.sleep(interval)
     except KeyboardInterrupt:
