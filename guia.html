@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia del Broker — Arquitectura de Software</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --orange: #d2991d;
+    --red: #f85149;
+    --purple: #a371f7;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+  h1 { font-size: 2.4em; margin-bottom: 4px; letter-spacing: -0.5px; }
+  h1 span { color: var(--accent); }
+  h2 {
+    font-size: 1.6em; margin: 48px 0 16px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+  }
+  h3 { font-size: 1.2em; margin: 24px 0 10px; color: var(--accent); }
+  p { margin-bottom: 14px; }
+  .subtitle { color: var(--muted); font-size: 1.05em; margin-bottom: 32px; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 22px 26px; margin: 18px 0;
+  }
+
+  /* Collapsible sections */
+  details { margin: 14px 0; }
+  details > summary {
+    cursor: pointer; font-weight: 600; font-size: 1.1em;
+    padding: 14px 18px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 8px;
+    list-style: none; display: flex; align-items: center; gap: 10px;
+    transition: background 0.15s;
+  }
+  details > summary:hover { background: #1c2333; }
+  details > summary::before {
+    content: "+"; font-size: 1.2em; font-weight: bold; color: var(--accent);
+    min-width: 22px; text-align: center; transition: transform 0.2s;
+  }
+  details[open] > summary::before { content: "−"; }
+  details[open] > summary { border-radius: 8px 8px 0 0; }
+  .detail-body {
+    background: var(--card); border: 1px solid var(--border);
+    border-top: none; border-radius: 0 0 8px 8px; padding: 18px 26px;
+  }
+
+  code {
+    font-family: var(--mono); font-size: 0.9em;
+    background: #1c2333; padding: 2px 7px; border-radius: 4px;
+    color: var(--orange);
+  }
+  pre {
+    font-family: var(--mono); font-size: 0.85em;
+    background: #0d1117; border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px 20px; overflow-x: auto;
+    line-height: 1.55; margin: 12px 0;
+  }
+  pre .kw { color: #ff7b72; }
+  pre .str { color: #a5d6ff; }
+  pre .cmt { color: #8b949e; font-style: italic; }
+  pre .fn { color: #d2a8ff; }
+  pre .num { color: #79c0ff; }
+
+  .flow {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 30px; margin: 20px 0;
+    text-align: center; font-family: var(--mono); font-size: 0.88em;
+    line-height: 2; overflow-x: auto; white-space: pre;
+  }
+  .flow .pub { color: var(--orange); }
+  .flow .brok { color: var(--accent); }
+  .flow .sub { color: var(--green); }
+  .flow .arrow { color: var(--muted); }
+
+  .tag {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 0.8em; font-weight: 600; margin: 2px 4px;
+  }
+  .tag-pub { background: #3a2200; color: var(--orange); }
+  .tag-sub { background: #003820; color: var(--green); }
+  .tag-srv { background: #001a3a; color: var(--accent); }
+  .tag-pat { background: #2a1030; color: var(--purple); }
+
+  .tip {
+    background: #1a2a1a; border-left: 4px solid var(--green);
+    padding: 12px 18px; margin: 16px 0; border-radius: 0 8px 8px 0;
+    font-size: 0.95em;
+  }
+  .tip strong { color: var(--green); }
+
+  .toc { line-height: 2.2; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  table {
+    width: 100%; border-collapse: collapse; margin: 16px 0;
+  }
+  th, td {
+    text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--muted); font-weight: 600; font-size: 0.85em; text-transform: uppercase; }
+
+  .footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9em; text-align: center; }
+
+  @media (max-width: 600px) {
+    body { padding: 20px 12px; }
+    h1 { font-size: 1.8em; }
+    pre { font-size: 0.78em; padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Guia del <span>Broker</span> de Mensajeria</h1>
+<p class="subtitle">
+  Entende cada pieza del sistema, explicado como si estuvieras tomando un cafe con quien lo construyo.
+  Curso de Arquitectura de Software — Cliente/Servidor + Publicador/Suscriptor.
+</p>
+
+<div class="toc card">
+  <strong>?Que queres entender?</strong><br>
+  <a href="#panorama">1. Panorama general</a><br>
+  <a href="#protocolo">2. El protocolo — como hablan entre si</a><br>
+  <a href="#servidor">3. El servidor — el corazon del broker</a><br>
+  <a href="#cliente">4. El cliente — la pieza que usan publishers y subscribers</a><br>
+  <a href="#almacenamiento">5. Almacenamiento — donde vive la historia</a><br>
+  <a href="#ejemplos">6. Los ejemplos — publicador, suscriptor y demo</a><br>
+  <a href="#flujo">7. Flujo completo de un mensaje (paso a paso)</a><br>
+  <a href="#ejecutar">8. Como ejecutar todo</a><br>
+  <a href="#patrones">9. Patrones de arquitectura en accion</a><br>
+  <a href="#produccion">10. De aca a produccion</a>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="panorama">1. Panorama general</h2>
+
+<p>
+  Pensa en un <strong>cartero</strong> en un edificio de oficinas. Llegan paquetes de distintas empresas
+  (los <span class="tag tag-pub">publishers</span>). El cartero no los entrega a cualquiera — solo a las
+  oficinas que se anotaron para recibir cierto tipo de paquete
+  (los <span class="tag tag-sub">subscribers</span>).
+</p>
+
+<p>
+  Ese cartero es el <strong>broker</strong>. Su unica responsabilidad es recibir mensajes de A y entregarlos a B, C y D
+  — sin que A sepa quienes son B, C o D. Eso se llama <strong>desacoplamiento</strong>, y es una de las
+  ideas mas poderosas de la arquitectura de software.
+</p>
+
+<div class="card">
+  <strong>Tres protagonistas:</strong>
+  <table>
+    <tr><th>Rol</th><th>?Que hace?</th><th>Analogia</th></tr>
+    <tr>
+      <td><span class="tag tag-pub">Publisher</span></td>
+      <td>Envia mensajes a un topico</td>
+      <td>La empresa que manda un paquete</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-srv">Broker</span></td>
+      <td>Recibe, persiste y enruta mensajes</td>
+      <td>El cartero inteligente</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-sub">Subscriber</span></td>
+      <td>Recibe mensajes de topicos a los que se suscribio</td>
+      <td>La oficina que recibe el paquete</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="protocolo">2. El protocolo — el "idioma" que todos hablan</h2>
+
+<p>
+  Para que el cartero entienda los paquetes, todos deben usar el mismo formato. Eso es el
+  <strong>protocolo</strong>: las reglas de como se escribe un mensaje en bytes para que el otro lado lo entienda.
+</p>
+
+<p>Nuestro protocolo tiene dos capas:</p>
+
+<div class="card">
+  <h3>2.1 Formato fisico (wire format)</h3>
+  <pre>┌───────────────┬──────────────────────────┐
+│   8 bytes     │       N bytes            │
+│   00000067    │  {"cmd":"PUBLISH",       │
+│  (longitud)   │   "tpc":"clima",         │
+│               │   "pld":{"temp":25}}     │
+└───────────────┴──────────────────────────┘</pre>
+  <p>
+    Los <strong>primeros 8 bytes</strong> dicen "el mensaje mide 67 caracteres".
+    El que lee sabe exactamente cuantos bytes esperar, sin adivinar.
+    Esto es lo mismo que hacen HTTP (Content-Length) y muchisimos protocolos reales.
+  </p>
+</div>
+
+<div class="card">
+  <h3>2.2 Comandos disponibles</h3>
+  <table>
+    <tr><th>Comando</th><th>?Quien lo envia?</th><th>Significado</th></tr>
+    <tr><td><code>CONNECT</code></td><td>Cliente</td><td>"Hola broker, quiero conectarme"</td></tr>
+    <tr><td><code>PUBLISH</code></td><td>Publisher</td><td>"Entrega esto en el topico X"</td></tr>
+    <tr><td><code>SUBSCRIBE</code></td><td>Subscriber</td><td>"Quiero recibir todo lo del topico X"</td></tr>
+    <tr><td><code>UNSUBSCRIBE</code></td><td>Subscriber</td><td>"Ya no quiero recibir del topico X"</td></tr>
+    <tr><td><code>MESSAGE</code></td><td>Broker</td><td>"Te entrego este mensaje que pediste"</td></tr>
+    <tr><td><code>OK</code></td><td>Broker</td><td>"Recibido, todo bien"</td></tr>
+    <tr><td><code>ERROR</code></td><td>Broker</td><td>"Algo salio mal"</td></tr>
+    <tr><td><code>HEARTBEAT</code></td><td>Cliente</td><td>"Sigo vivo, no me desconectes"</td></tr>
+    <tr><td><code>DISCONNECT</code></td><td>Cliente</td><td>"Chau, me voy"</td></tr>
+  </table>
+</div>
+
+<div class="tip">
+  <strong>Dato clave:</strong> El archivo <code>protocol.py</code> tiene solo 60 lineas.
+  Define el <code>Frame</code> (el sobre) y los metodos <code>encode()</code> y <code>decode()</code>
+  para convertir entre objetos Python y bytes en la red. Eso es todo el protocolo.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="servidor">3. El servidor — el corazon del broker</h2>
+
+<p>
+  El servidor es el cartero. Vive en <code>broker/server.py</code> y hace tres cosas fundamentales:
+</p>
+
+<div class="card">
+  <h3>3.1 Aceptar conexiones</h3>
+  <p>
+    Cuando un cliente nuevo golpea la puerta (<code>socket.accept()</code>), el servidor le da la
+    bienvenida con un <code>OK</code> que contiene su <code>client_id</code> — un identificador unico
+    de 8 caracteres como <code>abc12345</code>. Desde ese momento, el cliente esta "adentro".
+  </p>
+</div>
+
+<div class="card">
+  <h3>3.2 El event loop — un solo hilo para miles de conexiones</h3>
+  <p>
+    El servidor usa <code>selectors.DefaultSelector()</code>, que es una herramienta del sistema operativo
+    para decir "avisame cuando algun socket tenga datos listos para leer". En lugar de crear un hilo por
+    cada cliente conectado, el servidor hace:
+  </p>
+  <pre><span class="kw">while True</span>:
+    events = self.sel.select(timeout=<span class="num">1.0</span>)
+    <span class="kw">for</span> key, mask <span class="kw">in</span> events:
+        <span class="kw">if</span> key.data <span class="kw">is None</span>:
+            self._accept(key.fileobj)       <span class="cmt"># nuevo cliente</span>
+        <span class="kw">else</span>:
+            self._handle_client(key.fileobj) <span class="cmt"># datos de un cliente existente</span></pre>
+  <p>
+    Esto escala muchisimo mejor que un hilo por conexion. Es el mismo patron que usa Nginx, Node.js y Redis.
+  </p>
+</div>
+
+<div class="card">
+  <h3>3.3 El router — ?a quien le entrego esto?</h3>
+  <p>
+    El corazon del enrutamiento es un diccionario:
+  </p>
+  <pre>self.subscriptions = {
+    <span class="str">"clima"</span>:   {<span class="str">"sub_abc"</span>, <span class="str">"sub_def"</span>},
+    <span class="str">"bolsa"</span>:   {<span class="str">"sub_ghi"</span>},
+    <span class="str">"deporte"</span>: {<span class="str">"sub_abc"</span>, <span class="str">"sub_jkl"</span>, <span class="str">"sub_mno"</span>},
+}</pre>
+  <p>
+    Cuando llega un <code>PUBLISH</code> al topico <code>"clima"</code>, el servidor busca en ese
+    diccionario y reenvia el mensaje a <code>sub_abc</code> y <code>sub_def</code>. Operacion O(1).
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="cliente">4. El cliente — una sola clase para publicar Y suscribir</h2>
+
+<p>
+  Esta es una decision de diseno importante: en lugar de tener un <code>PublisherClient</code> y un
+  <code>SubscriberClient</code> separados, tenemos una unica clase <code>BrokerClient</code> que sabe
+  hacer ambas cosas.
+</p>
+
+<div class="card">
+  <h3>?Por que una sola clase?</h3>
+  <p>
+    Porque en la vida real, un servicio muchas veces publica Y consume. Un microservicio de pedidos
+    publica "pedido_creado" y se suscribe a "pago_confirmado". Una sola conexion TCP al broker
+    soporta ambos roles — ahorramos recursos y simplificamos el codigo.
+  </p>
+</div>
+
+<div class="card">
+  <h3>?Como se usa?</h3>
+  <pre><span class="kw">from</span> broker <span class="kw">import</span> BrokerClient
+
+<span class="cmt"># Cualquier cliente puede publicar, suscribirse, o ambos</span>
+client = BrokerClient()
+client.connect()
+
+<span class="cmt"># Como suscriptor</span>
+<span class="kw">def</span> <span class="fn">cuando_llegue_mensaje</span>(topic, payload, msg_id, timestamp):
+    print(<span class="str">f"Recibi en {topic}: {payload}"</span>)
+
+client.on_message(<span class="str">"noticias"</span>, cuando_llegue_mensaje)
+client.subscribe(<span class="str">"noticias"</span>)
+
+<span class="cmt"># Como publicador (en el mismo cliente!)</span>
+client.publish(<span class="str">"alertas"</span>, {<span class="str">"mensaje"</span>: <span class="str">"Servidor caido"</span>})</pre>
+</div>
+
+<div class="card">
+  <h3>El hilo de escucha</h3>
+  <p>
+    Al conectarse, el cliente lanza un hilo en segundo plano que se dedica exclusivamente a leer del socket.
+    Cuando llega un <code>MESSAGE</code> del broker, invoca los callbacks que registraste con
+    <code>on_message()</code>. Asi no bloqueas el hilo principal — vos haces tu trabajo y los mensajes
+    te llegan cuando el broker los envia.
+  </p>
+  <p>
+    <strong>Importante:</strong> un solo hilo lee del socket para evitar condiciones de carrera.
+    Las operaciones de envio (<code>publish</code>, <code>subscribe</code>) usan un lock para no
+    pisarse entre ellas.
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="almacenamiento">5. Almacenamiento — donde queda la huella</h2>
+
+<p>
+  Todo mensaje que pasa por el broker queda guardado en la carpeta <code>broker_data/</code>.
+  Dos archivos simples, legibles con cualquier editor:
+</p>
+
+<div class="card">
+  <h3>topics.json</h3>
+  <pre>[
+  <span class="str">"noticias"</span>,
+  <span class="str">"clima"</span>,
+  <span class="str">"deportes"</span>
+]</pre>
+  <p>Lista plana de todos los topicos que alguna vez se usaron.</p>
+</div>
+
+<div class="card">
+  <h3>messages.jsonl</h3>
+  <pre>{<span class="str">"message_id"</span>: <span class="str">"a1b2c3d4e5f6"</span>, <span class="str">"topic"</span>: <span class="str">"noticias"</span>, <span class="str">"payload"</span>: {<span class="str">"texto"</span>: <span class="str">"Hola mundo"</span>}, <span class="str">"timestamp"</span>: <span class="str">"2026-07-01T14:30:00Z"</span>}
+{<span class="str">"message_id"</span>: <span class="str">"b2c3d4e5f6a7"</span>, <span class="str">"topic"</span>: <span class="str">"clima"</span>, <span class="str">"payload"</span>: {<span class="str">"temp"</span>: <span class="num">25</span>}, <span class="str">"timestamp"</span>: <span class="str">"2026-07-01T14:30:05Z"</span>}</pre>
+  <p>
+    Una linea por mensaje — un <strong>append-only log</strong>. Nunca se borra, solo se agrega al final.
+    Esto es exactamente el mismo principio que usa Kafka internamente: escritura secuencial, inmutable, ultra rapida.
+  </p>
+</div>
+
+<div class="tip">
+  <strong>Para el profe:</strong> El patron append-only log es uno de los conceptos mas importantes
+  en sistemas distribuidos. Lo usan Kafka, PostgreSQL (WAL), SQLite (journal), y practicamente
+  cualquier base de datos seria. Aca lo ves en su forma mas pura: un archivo de texto que solo crece.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ejemplos">6. Los ejemplos — publicador, suscriptor y demo</h2>
+
+<details>
+<summary>6.1 Publisher de ejemplo</summary>
+<div class="detail-body">
+  <p>Un programa simple que se conecta al broker y publica un mensaje cada 2 segundos en el topico <code>"noticias"</code>.</p>
+  <pre><span class="kw">from</span> broker <span class="kw">import</span> BrokerClient
+
+client = BrokerClient()
+client.connect()
+
+count = <span class="num">0</span>
+<span class="kw">while True</span>:
+    count += <span class="num">1</span>
+    client.publish(<span class="str">"noticias"</span>, {
+        <span class="str">"numero"</span>: count,
+        <span class="str">"contenido"</span>: <span class="str">f"Mensaje #{count}"</span>,
+    })
+    time.sleep(<span class="num">2.0</span>)</pre>
+  <p>
+    Ejecucion: <code>python -m examples.publisher [host] [puerto] [topico] [intervalo]</code>
+  </p>
+</div>
+</details>
+
+<details>
+<summary>6.2 Subscriber de ejemplo</summary>
+<div class="detail-body">
+  <p>Se conecta, se suscribe a un topico, y muestra cada mensaje que recibe.</p>
+  <pre><span class="kw">from</span> broker <span class="kw">import</span> BrokerClient
+
+<span class="kw">def</span> <span class="fn">mostrar</span>(topic, payload, msg_id, ts):
+    print(<span class="str">f">> [{topic}] {payload}"</span>)
+
+client = BrokerClient()
+client.connect()
+client.on_message(<span class="str">"noticias"</span>, mostrar)
+client.subscribe(<span class="str">"noticias"</span>)
+
+<span class="kw">while True</span>: <span class="kw">pass</span>  <span class="cmt"># el hilo de escucha hace el trabajo</span></pre>
+  <p>
+    Ejecucion: <code>python -m examples.subscriber [host] [puerto] [topico]</code>
+  </p>
+</div>
+</details>
+
+<details>
+<summary>6.3 Demo integrada (todo en uno)</summary>
+<div class="detail-body">
+  <p>
+    Si queres ver todo funcionando sin abrir 3 terminales, la demo levanta el broker, un suscriptor
+    y un publicador en un solo proceso, envia 5 mensajes, y se cierra limpiamente.
+  </p>
+  <pre>python -m examples.demo</pre>
+  <p><strong>Salida esperada:</strong></p>
+  <pre>[Broker] Escuchando en 127.0.0.1:5555
+[Broker] + cliente-53e5
+[cliente-53e5] Conectado al broker
+[cliente-53e5] Suscrito a 'demo'
+--- Publicando 5 mensajes ---
+   [SUSCRIPTOR] Recibido: {'msg': 'Hola mundo #1', 'valor': 10}
+   [SUSCRIPTOR] Recibido: {'msg': 'Hola mundo #2', 'valor': 20}
+   ...
+--- Demo completada ---</pre>
+</div>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="flujo">7. Flujo completo de un mensaje (paso a paso)</h2>
+
+<p>Sigamos el viaje de un solo mensaje desde que nace hasta que llega a destino:</p>
+
+<div class="flow">
+<span class="pub">┌──────────┐</span>
+<span class="pub">│ PUBLISHER│</span>  <span class="cmt">1. Quiere mandar "Hola" al topico "noticias"</span>
+<span class="pub">└────┬─────┘</span>
+<span class="pub">     │</span>  client.publish("noticias", {"texto": "Hola"})
+<span class="pub">     │</span>  <span class="cmt">2. Frame.encode() crea los bytes con prefijo de longitud</span>
+<span class="pub">     │</span>  <span class="cmt">3. socket.sendall() envia los bytes por TCP</span>
+<span class="pub">     │</span>
+<span class="pub">     ▼</span>
+<span class="arrow">══════════════════════ RED ══════════════════════</span>
+<span class="arrow">                    │</span>
+<span class="arrow">                    ▼</span>
+<span class="brok">          ┌─────────────────┐</span>
+<span class="brok">          │     BROKER      │</span>
+<span class="brok">          │                 │</span>
+<span class="brok">          │  4. selector    │</span>  <span class="cmt">"El socket del publisher tiene datos"</span>
+<span class="brok">          │     .select()   │</span>
+<span class="brok">          │        │         │</span>
+<span class="brok">          │        ▼         │</span>
+<span class="brok">          │  5. Frame.decode │</span>  <span class="cmt">"Ah, es un PUBLISH a 'noticias'"</span>
+<span class="brok">          │        │         │</span>
+<span class="brok">          │        ▼         │</span>
+<span class="brok">          │  6. MessageLog   │</span>  <span class="cmt">Lo guarda en messages.jsonl</span>
+<span class="brok">          │     .save_msg()  │</span>
+<span class="brok">          │        │         │</span>
+<span class="brok">          │        ▼         │</span>
+<span class="brok">          │  7. subscriptions│</span>  <span class="cmt">"noticias" -> {sub_abc, sub_def}</span>
+<span class="brok">          │     ["noticias"] │</span>
+<span class="brok">          │        │         │</span>
+<span class="brok">          │        ▼         │</span>
+<span class="brok">          │  8. Para cada    │</span>  <span class="cmt">socket.sendall(MESSAGE, ...)</span>
+<span class="brok">          │     suscriptor:  │</span>
+<span class="brok">          │     reenviar     │</span>
+<span class="brok">          │        │         │</span>
+<span class="brok">          │  9. Al publisher:│</span>  <span class="cmt">socket.sendall(OK, ...)</span>
+<span class="brok">          │     confirmar    │</span>
+<span class="brok">          └────────┬────────┘</span>
+<span class="brok">                   │</span>
+<span class="arrow">══════════════════ RED ══════════════════════</span>
+<span class="arrow">        │                          │</span>
+<span class="arrow">        ▼                          ▼</span>
+<span class="sub">  ┌───────────┐           ┌───────────┐</span>
+<span class="sub">  │SUBSCRIBER │           │SUBSCRIBER │</span>
+<span class="sub">  │   abc     │           │   def     │</span>
+<span class="sub">  └───────────┘           └───────────┘</span>
+<span class="sub">  10. listen loop         10. listen loop</span>
+<span class="sub">      recibe el                recibe el</span>
+<span class="sub">      MESSAGE                  MESSAGE</span>
+<span class="sub">  11. callback()          11. callback()</span>
+<span class="sub">      "Recibi: Hola"          "Recibi: Hola"</span>
+</div>
+
+<div class="tip">
+  <strong>Lo importante:</strong> el publisher nunca supo que existian abc y def.
+  El subscriber nunca supo quien publico. El broker fue el unico punto de contacto para ambos.
+  Eso es desacoplamiento.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ejecutar">8. Como ejecutar todo</h2>
+
+<div class="card">
+  <h3>Requisitos</h3>
+  <p>Python 3.10 o superior. Nada mas. Cero dependencias externas.</p>
+
+  <h3>Demo rapida (un solo comando)</h3>
+  <pre>python -m examples.demo</pre>
+
+  <h3>Modo real (3 terminales separadas)</h3>
+  <table>
+    <tr><th>Terminal</th><th>Comando</th></tr>
+    <tr><td>1 (Broker)</td><td><code>python -m broker.server</code></td></tr>
+    <tr><td>2 (Suscriptor)</td><td><code>python -m examples.subscriber</code></td></tr>
+    <tr><td>3 (Publicador)</td><td><code>python -m examples.publisher</code></td></tr>
+  </table>
+
+  <h3>Personalizado</h3>
+  <table>
+    <tr><th>Que</th><th>Comando</th></tr>
+    <tr><td>Broker en otro puerto</td><td><code>python -m broker.server 0.0.0.0 7777</code></td></tr>
+    <tr><td>Publicador con topico "clima" cada 3s</td><td><code>python -m examples.publisher 127.0.0.1 7777 clima 3.0</code></td></tr>
+    <tr><td>Suscriptor de "clima"</td><td><code>python -m examples.subscriber 127.0.0.1 7777 clima</code></td></tr>
+  </table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="patrones">9. Patrones de arquitectura en accion</h2>
+
+<table>
+  <tr>
+    <th>Patron</th><th>?Donde se ve?</th><th>?Por que lo usamos?</th>
+  </tr>
+  <tr>
+    <td><span class="tag tag-pat">Cliente-Servidor</span></td>
+    <td>Relacion Broker ↔ Clientes</td>
+    <td>Un punto central que sirve a muchos — separacion clara de responsabilidades</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-pat">Pub/Sub</span></td>
+    <td>Enrutamiento por topicos</td>
+    <td>Desacopla emisores de receptores — el que envia no sabe quien recibe</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-pat">Event Loop</span></td>
+    <td><code>selectors</code> en el servidor</td>
+    <td>Miles de conexiones con un solo hilo — eficiencia sin complejidad de threads</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-pat">Protocolo con prefijo de longitud</span></td>
+    <td><code>Frame.encode/decode</code></td>
+    <td>El receptor sabe exactamente donde termina cada mensaje — sin ambiguedades</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-pat">Append-only Log</span></td>
+    <td><code>MessageLog</code></td>
+    <td>Escritura inmutable secuencial — rapida, simple, auditable</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-pat">Observer (callback)</span></td>
+    <td><code>client.on_message()</code></td>
+    <td>El suscriptor registra interes y es notificado cuando llega algo — inversion de control</td>
+  </tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="produccion">10. De aca a produccion — ?que faltaria?</h2>
+
+<p>
+  Lo que construiste es el <strong>motor</strong> del sistema. En produccion se le agrega
+  <strong>carroceria</strong>, pero el motor no cambia:
+</p>
+
+<table>
+  <tr><th>Hoy (curso)</th><th>Manana (produccion)</th><th>?Por que?</th></tr>
+  <tr>
+    <td>1 solo broker</td>
+    <td>Cluster con Raft/Paxos</td>
+    <td>Si se cae el unico broker, chau sistema. Con 3 o 5 nodos, sobrevive.</td>
+  </tr>
+  <tr>
+    <td>Sin autenticacion</td>
+    <td>TLS + JWT</td>
+    <td>Cualquiera podria conectarse y publicar basura. En produccion, cada cliente se identifica.</td>
+  </tr>
+  <tr>
+    <td>JSON en texto</td>
+    <td>Protobuf / Avro</td>
+    <td>Esquema estricto + compresion binaria = menos bytes en la red, validacion automatica.</td>
+  </tr>
+  <tr>
+    <td>Sin garantia (at-most-once)</td>
+    <td>ACK + reintentos + DLQ</td>
+    <td>Si el suscriptor se cae, el mensaje se pierde. Con ACK, el broker reintenta hasta que confirme.</td>
+  </tr>
+  <tr>
+    <td>Suscriptores offline pierden mensajes</td>
+    <td>Offset por suscriptor (como Kafka)</td>
+    <td>Cada suscriptor recuerda "lei hasta el mensaje 57". Si se desconecta, al volver sigue desde el 58.</td>
+  </tr>
+  <tr>
+    <td>Archivos planos</td>
+    <td>WAL + Snapshots</td>
+    <td>Para millones de mensajes, necesitas compactacion periodica sin perder el historial.</td>
+  </tr>
+  <tr>
+    <td>Sin monitoreo</td>
+    <td>API REST + dashboard</td>
+    <td>En produccion necesitas saber cuantos mensajes por segundo, tasas de error, latencia.</td>
+  </tr>
+</table>
+
+<!-- ============================================================ -->
+
+<div class="footer">
+  <p>
+    Proyecto para el curso de <strong>Arquitectura de Software</strong><br>
+    Construido con Python puro — sin frameworks, sin dependencias, sin magia.<br>
+    La mejor forma de entender un broker es construir uno.
+  </p>
+  <p style="margin-top:10px;">
+    <a href="README.md">README.md</a> &nbsp;|&nbsp;
+    <a href="presentacion.md">presentacion.md</a> &nbsp;|&nbsp;
+    <code>broker/</code> &nbsp;|&nbsp;
+    <code>examples/</code>
+  </p>
+</div>
+
+</body>
+</html>
